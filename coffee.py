@@ -1,11 +1,16 @@
 from flask import Flask, render_template
+import struct
+from decimal import *
 app = Flask(__name__)
+hid = None
 
 @app.route('/')
 def index():
-    return render_template('coffee.html', weight='4 lbs, 10.7 oz')
+    struct.unpack('<III', hid.read(12))
+    weight, = struct.unpack('<i', hid.read(4))
+    return render_template('coffee.html',
+        weight='{0} lbs, {1:.3} oz'.format(weight/160, Decimal(weight%160) / Decimal(10)))
 
 if __name__ == '__main__':
-    global hid
     with open('/dev/usb/hiddev0', 'rb') as hid:
-        app.run()
+        app.run(host='0.0.0.0', debug=True)
