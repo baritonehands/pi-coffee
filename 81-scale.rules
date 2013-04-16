@@ -1,0 +1,1 @@
+SUBSYSTEM=="usbmisc", ATTRS{idVendor}=="1446", ATTRS{idProduct}=="6a73", RUN+="/home/pi/pi-coffee/weigh.sh", MODE:="0666"
