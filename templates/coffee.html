@@ -7,6 +7,7 @@
         <div>Morningstar Coffee Status:</div>
         <div data-bind="text: weight"></div>
         <div data-bind="text: percent"></div>
+        <div data-bind="text: updated"></div>
         
         <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>        
         <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
@@ -16,11 +17,13 @@
 
                 self.weight = ko.observable();
                 self.percent = ko.observable();
+                self.updated = ko.observable();
             
                 var getStats = function() {
                     $.getJSON('/stats', function(data) {
                         self.weight(data.weight);
                         self.percent(data.percent);
+                        self.updated(new Date());
                     });
                 };
                 getStats();
