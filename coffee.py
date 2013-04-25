@@ -1,16 +1,19 @@
-from flask import Flask, render_template
+from flask import Flask, jsonify, render_template
 import struct
+import memcache
 from decimal import *
 app = Flask(__name__)
-hid = None
+mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 
 @app.route('/')
 def index():
-    struct.unpack('<III', hid.read(12))
-    weight, = struct.unpack('<i', hid.read(4))
-    return render_template('coffee.html',
-        weight='{0} lbs, {1:.3} oz'.format(weight/160, Decimal(weight%160) / Decimal(10)))
+    return render_template('coffee.html')
+
+@app.route('/stats')
+def stats():
+    weight = mc.get('weight')
+    percent = mc.get('percent')
+    return jsonify(weight='{0:.3}'.format(weight), percent='{0:.4}'.format(percent))
 
 if __name__ == '__main__':
-    with open('/dev/usb/hiddev0', 'rb') as hid:
-        app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True)

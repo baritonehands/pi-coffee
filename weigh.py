@@ -4,6 +4,7 @@ from decimal import *
 import pyudev
 import syslog
 import threading
+import memcache
 
 getcontext().prec = 3
 
@@ -33,24 +34,34 @@ class MonitorThread(threading.Thread):
             if(action == 'remove' and device == scale):
                 return
 
-class ScaleReader:
-    hid = None
-    state = States.Disconnected
+class ScaleReader(object):
+    full_weight = Decimal(160) # in 1/10 ounce
 
     def __init__(self, device):
         self.hid = open(device.device_node, 'rb')
         self.state = States.Connected
+        self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
     
     def start(self):
-        idx = 0
+        last = -1
+        count = 0
         while(True):
             try:
-                struct.unpack('<III', self.hid.read(12))
+                self.hid.read(12) # Pattern repeats every 16 bytes, last 4 is weight
                 weight, = struct.unpack('<i', self.hid.read(4))
-                idx += 1
-                if idx == 100:
-                    syslog.syslog('{0} lbs, {1:.3} oz'.format(weight/160, Decimal(weight%160) / Decimal(10)))
-                    idx = 0
+                if weight == last:
+                    count += 1
+                else:
+                    count = 0
+                last = weight
+                
+                if count >= 20:
+                    weight = Decimal(weight)
+                    self.mc.set('weight', weight)
+                    percent = ScaleReader.full_weight if weight > ScaleReader.full_weight else (weight / ScaleReader.full_weight) * Decimal(100)
+                    self.mc.set('percent', percent)
+                    count = 20
+                
             except Exception as ex:
                 syslog.syslog(str(ex))
                 return
