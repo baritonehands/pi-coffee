@@ -58,7 +58,7 @@ class ScaleReader(object):
                 if count >= 20:
                     weight = Decimal(weight)
                     percent = ScaleReader.full_weight if weight > ScaleReader.full_weight else (weight / ScaleReader.full_weight) * Decimal(100)
-                    self.mc.set('coffee', dict(percent=percent, weight=weight))
+                    self.mc.set_multi(dict(percent=percent, weight=weight), key_prefix='coffee')
                     count = 20
                 
             except Exception as ex:

@@ -11,7 +11,7 @@ def index():
 
 @app.route('/stats')
 def stats():
-    coffee = mc.get('coffee')
+    coffee = mc.get_multi(['weight', 'percent'], key_prefix='coffee_')
     return jsonify(weight='{0:.3}'.format(coffee['weight']), percent='{0:.4}'.format(coffee['percent']))
 
 if __name__ == '__main__':
