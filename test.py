@@ -1,29 +1,14 @@
-#!/usr/bin/env python
-import usb.core
-import usb.util
+import memcache
+from decimal import *
+import time
 
-VENDOR_ID = 0x1446
-PRODUCT_ID = 0x6A73
+getcontext().prec = 3
+c = memcache.Client(['127.0.0.1:11211'], debug=0)
+c.set('coffee_percent', Decimal(100))
 
-# find the USB device
-device = usb.core.find(idVendor=VENDOR_ID,
-                       idProduct=PRODUCT_ID)
-
-# use the first/default configuration
-device.set_configuration()
-# first endpoint
-endpoint = device[0][(0,0)][0]
-
-# read a data packet
-attempts = 10
-data = None
-while True:#data is None and attempts > 0:
-    try:
-        data = device.read(endpoint.bEndpointAddress,
-                           endpoint.wMaxPacketSize)
-    except usb.core.USBError as e:
-        data = None
-        if e.args == ('Operation timed out',):
-            attempts -= 1
-            continue
-    print data
+while True:
+    percent = c.get('coffee_percent')
+    percent -= Decimal(10)
+    if percent <= Decimal(0): percent = Decimal(100)
+    c.set('coffee_percent', percent)
+    time.sleep(10)
